@@ -6,28 +6,38 @@ from tkinter import Button, Entry, simpledialog
 class Client:
 
     def entry(self):
-       Intro = tkinter.Tk()
-       Intro.title("Login")
-       Intro.geometry("300x400")
+        Intro = tkinter.Tk()
+        Intro.title("Login")
+        Intro.geometry("300x400")
 
-       nickname_entry = Entry(Intro)
-       ip_entry = Entry(Intro)
-       port_entry = Entry(Intro)
+        nickname_entry = Entry(Intro)
+        nickname_label = tkinter.Label(Intro, text="Nickname:", bg="lightgray")
+
+        ip_entry = Entry(Intro)
+        ip_label = tkinter.Label(Intro, text="IP:", bg="lightgray")
+
+        port_entry = Entry(Intro)
+        port_label = tkinter.Label(Intro, text="Port:", bg="lightgray")
        
 
-       def Enter():
-         self.name = nickname_entry.get()
-         self.ip = ip_entry.get()
-         self.port = port_entry.get()
-         Intro.destroy()
+        def Enter():
+            self.name = nickname_entry.get()
+            self.ip = ip_entry.get()
+            self.port = port_entry.get()
+            Intro.destroy()
 
-       nickname_entry.grid(row=0, column=0, pady = 30, padx = 90)
-       ip_entry.grid(row=1, column=0, pady = 30, padx = 5)
-       port_entry.grid(row=2, column=0, pady = 30, padx = 5)
+        nickname_label.grid(row=0, column=0, padx=5, pady=25)
+        nickname_entry.grid(row=0, column=1, padx=5, pady=25)
+        
+        ip_label.grid(row=1, column=0, padx=5, pady=25)
+        ip_entry.grid(row=1, column=1, padx=5, pady=25)
+
+        port_label.grid(row=2, column=0, padx=5, pady=25)
+        port_entry.grid(row=2, column=1, padx=5, pady=25)
        
-       login_button = Button(Intro, text="Enter", command=Enter)
-       login_button.grid(row=3, column=0, pady = 30, padx = 5)
-       Intro.mainloop()
+        login_button = Button(Intro, text="Enter", command=Enter)
+        login_button.grid(row=4, column=1, padx=25)
+        Intro.mainloop()
 
     def gui_loop(self):
         self.win = tkinter.Tk()

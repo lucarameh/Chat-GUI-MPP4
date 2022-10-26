@@ -19,12 +19,12 @@ class Client:
         port_entry = Entry(Intro)
         port_label = tkinter.Label(Intro, text="Port:", bg="lightgray")
        
-
         def Enter():
             self.name = nickname_entry.get()
             self.ip = ip_entry.get()
             self.port = port_entry.get()
             Intro.destroy()
+            self.gui_loop()
 
         nickname_label.grid(row=0, column=0, padx=5, pady=25)
         nickname_entry.grid(row=0, column=1, padx=5, pady=25)
@@ -111,8 +111,5 @@ class Client:
        self.port = 0
        self.Entered = False
        self.entry()
-       self.gui_loop()
-
-       
-      
+     
 client = Client()

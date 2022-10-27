@@ -8,10 +8,12 @@ class Client:
     def entry(self):
         Intro = tkinter.Tk()
         Intro.title("Login")
-        Intro.geometry("300x400")
+        Intro.geometry("500x400")
 
         nickname_entry = Entry(Intro)
         nickname_label = tkinter.Label(Intro, text="Nickname:", bg="lightgray")
+        target_label = tkinter.Label(Intro, text="Target server:", bg="lightgray")
+        my_label = tkinter.Label(Intro, text="Your server:", bg="lightgray")
 
         ip_entry = Entry(Intro)
         ip_label = tkinter.Label(Intro, text="IP:", bg="lightgray")
@@ -19,6 +21,12 @@ class Client:
         port_entry = Entry(Intro)
         port_label = tkinter.Label(Intro, text="Port:", bg="lightgray")
        
+        ip_entry1 = Entry(Intro)
+        ip_label1 = tkinter.Label(Intro, text="IP:", bg="lightgray")
+
+        port_entry1 = Entry(Intro)
+        port_label1 = tkinter.Label(Intro, text="Port:", bg="lightgray")
+
         def Enter():
             self.name = nickname_entry.get()
             self.ip = ip_entry.get()
@@ -26,17 +34,26 @@ class Client:
             Intro.destroy()
             self.gui_loop()
 
+        target_label.grid(row=1, column=1, padx=5, pady=25)
+        my_label.grid(row=1, column=3, padx=5, pady=25)
+
         nickname_label.grid(row=0, column=0, padx=5, pady=25)
         nickname_entry.grid(row=0, column=1, padx=5, pady=25)
         
-        ip_label.grid(row=1, column=0, padx=5, pady=25)
-        ip_entry.grid(row=1, column=1, padx=5, pady=25)
+        ip_label.grid(row=2, column=0, padx=5, pady=25)
+        ip_entry.grid(row=2, column=1, padx=5, pady=25)
 
-        port_label.grid(row=2, column=0, padx=5, pady=25)
-        port_entry.grid(row=2, column=1, padx=5, pady=25)
+        port_label.grid(row=3, column=0, padx=5, pady=25)
+        port_entry.grid(row=3, column=1, padx=5, pady=25)
+        
+        ip_label1.grid(row=2, column=2, padx=5, pady=25)
+        ip_entry1.grid(row=2, column=3, padx=5, pady=25)
+
+        port_label1.grid(row=3, column=2, padx=5, pady=25)
+        port_entry1.grid(row=3, column=3, padx=5, pady=25)
        
         login_button = Button(Intro, text="Enter", command=Enter)
-        login_button.grid(row=4, column=1, padx=25)
+        login_button.grid(row=5, column=2, padx=25)
         Intro.mainloop()
 
     def gui_loop(self):

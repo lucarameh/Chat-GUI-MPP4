@@ -39,6 +39,7 @@ class Server:
             self.clients_info.append(info)
 
         self.clients_connections[0].send(self.clients_info[1].encode())
+        self.clients_connections[0].recv(self.BUFFER)
         self.clients_connections[1].send(self.clients_info[0].encode())
 
         self.clients_connections[0].close()

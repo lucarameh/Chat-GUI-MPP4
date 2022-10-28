@@ -6,7 +6,7 @@ from datetime import datetime
 from socket import *
 from time import *
 from threading import *
-
+from functools import partial
 
 class Client:
     def __init__(self, server_address):
@@ -51,11 +51,10 @@ class Client:
             connection_starter, self.other_name, other_ip, other_port = self.socket.recv(
                 self.BUFFER).decode().split(self.SEPARATOR)
 
-            self.socket.close()
-
             # Inicia a conexão com a outra parte
             # Existe uma diferença dependendo de qual parte irá fazer o bind/listen, o que é determinado pelo parametro connection_starter
             if (connection_starter == "1"):
+                self.socket.send("Ok".encode())
                 p2p_socket = socket(AF_INET, SOCK_STREAM)
                 p2p_socket.bind((self.ip, int(self.port)))
                 p2p_socket.listen(1)
@@ -63,17 +62,18 @@ class Client:
 
             else:
                 self.connection_socket = socket(AF_INET, SOCK_STREAM)
-                sleep(0.5)
                 self.connection_socket.connect((other_ip, int(other_port)))
 
-            self.connection_socket.send(f"oi! :) {self.other_name}".encode())
+            self.socket.close()
+
+            self.connection_socket.send(f"oi! :)".encode())
 
             print(self.connection_socket.recv(self.BUFFER).decode())
 
             # Vai para a página de chat
             Intro.destroy()
-            Thread(target=self.gui_loop).start()
-            Thread(target=self.receive).start()
+            Thread(target=self.gui_loop, args=()).start()
+            Thread(target=self.receive, args=()).start()
 
         nickname_label.grid(row=0, column=0, padx=5, pady=25)
         nickname_entry.grid(row=0, column=1, padx=5, pady=25)
@@ -112,7 +112,7 @@ class Client:
         self.input_area.pack(padx=20, pady=5)
 
         self.send_button = tkinter.Button(
-            self.win, text="send", command=self.write_enter)
+            self.win, text="send", command=self.write_send)
         self.send_button.config(font=("Arial", 12))
         self.send_button.pack(padx=20, pady=5)
 
@@ -123,16 +123,36 @@ class Client:
 
         def clear(event):
             self.input_area.delete('1.0', 'end')
+            
         self.input_area.bind("<Return>", self.write_enter)
         self.input_area.bind("<KeyRelease-Return>", clear)
 
         self.win.mainloop()
 
-
-    def write_enter(self):
+    # Função pra enviar a mensagem com o botão "send"
+    def write_send(self):
 
         if(not self.input_area.get('1.0', 'end').strip()):
             return
+            
+        msg = f"{self.name}: {self.input_area.get('1.0', 'end')}"
+        date = datetime.now()
+        date = date.strftime("%d-%m-%Y %H:%Mh")
+        message = f"{msg}  enviado {date}\n"
+        self.input_area.delete('1.0', 'end')
+        self.text_area.config(state='normal')
+        self.text_area.insert('end', message)
+        self.connection_socket.send(f"{msg}".encode())
+        self.text_area.yview('end')
+        self.text_area.config(state='disabled')
+        self.Entered = True
+
+    # Função pra enviar mensagem com a tecla Enter
+    def write_enter(self, event):
+
+        if(not self.input_area.get('1.0', 'end').strip()):
+            return
+
         msg = f"{self.name}: {self.input_area.get('1.0', 'end')}"
         date = datetime.now()
         date = date.strftime("%d-%m-%Y %H:%Mh")

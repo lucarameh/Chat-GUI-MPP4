@@ -1,12 +1,14 @@
+from distutils.file_util import write_file
 from importlib.util import set_loader
 import tkinter
 import tkinter.scrolledtext
-from tkinter import Button, Entry, simpledialog
+from tkinter import Button, Entry, simpledialog, filedialog
 from datetime import datetime
 from socket import *
 from time import *
 from threading import *
-
+import shutil
+import os
 
 class Client:
     def __init__(self, server_address):
@@ -74,6 +76,7 @@ class Client:
             Intro.destroy()
             Thread(target=self.gui_loop).start()
             Thread(target=self.receive).start()
+            Thread(target=self.receive_file).start()
 
         nickname_label.grid(row=0, column=0, padx=5, pady=25)
         nickname_entry.grid(row=0, column=1, padx=5, pady=25)
@@ -121,6 +124,12 @@ class Client:
         self.clear_button.config(font=("Arial", 12))
         self.clear_button.pack(padx=20, pady=5)
 
+        self.addFile_button = tkinter.Button(
+            self.win, text="Add file", command=self.UploadAction
+        )
+        self.addFile_button.config(font=("Arial", 12))
+        self.addFile_button.pack(padx=20, pady=5)
+
         def clear(event):
             self.input_area.delete('1.0', 'end')
         self.input_area.bind("<Return>", self.write_enter)
@@ -128,6 +137,38 @@ class Client:
 
         self.win.mainloop()
 
+    def UploadAction(self, event=None):
+        filetypes = (
+            ('Video files', '*.mp4'),
+            ('Photo files', '*.jpg *.jpeg *.png'),
+            ('Audio files', '*.mp3*')
+        )
+
+        self.filename = filedialog.askopenfilename(
+            title="Open a file",
+            filetypes=filetypes
+        )
+        print('Selected:', self.filename)
+
+        self.send_file()
+    
+    def send_file(self):
+        try:
+            shutil.make_archive("zip1", "zip", self.filename)
+            with open("zip1.zip", "rb") as f:
+                while True:
+                    bytes_read =  f.read(self.BUFFER)
+                    if not bytes_read:
+                        break
+                    self.connection_socket.send(bytes_read)
+
+            print("Acabou de enviar")
+
+        except:
+            print("Item not sent")
+    
+    def receive_file(self):
+        print("Ainda falta fazer a funcao de receber arquivos")
 
     def write_enter(self):
 
@@ -151,13 +192,21 @@ class Client:
         self.text_area.configure(state='disabled')
 
     def receive(self):
+        
         while True:
-            msg = self.connection_socket.recv(self.BUFFER).decode()
-            date = datetime.now()
-            date = date.strftime("%d-%m-%Y %H:%Mh")
-            msg = f"{msg} recebido {date}\n"
-            self.text_area.config(state='normal')
-            self.text_area.insert('end', msg)
-            self.text_area.yview('end')
-            self.text_area.config(state='disabled')
-            self.Entered = True
+            msg = self.connection_socket.recv(self.BUFFER)
+            try:
+                msg = msg.decode()
+                date = datetime.now()
+                date = date.strftime("%d-%m-%Y %H:%Mh")
+                msg = f"{msg} recebido {date}\n"
+                self.text_area.config(state='normal')
+                self.text_area.insert('end', msg)
+                self.text_area.yview('end')
+                self.text_area.config(state='disabled')
+                self.Entered = True
+            except:
+                path = os.path.basename("teste")
+                with open(path, 'wb') as f:
+                    f.write(msg)
+

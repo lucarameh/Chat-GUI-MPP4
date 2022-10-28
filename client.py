@@ -66,7 +66,7 @@ class Client:
                 sleep(0.5)
                 self.connection_socket.connect((other_ip, int(other_port)))
 
-            self.connection_socket.send(f"oi! :)".encode())
+            self.connection_socket.send(f"oi! :) {self.other_name}".encode())
 
             print(self.connection_socket.recv(self.BUFFER).decode())
 
@@ -112,7 +112,7 @@ class Client:
         self.input_area.pack(padx=20, pady=5)
 
         self.send_button = tkinter.Button(
-            self.win, text="send", command=self.write)
+            self.win, text="send", command=self.write_enter)
         self.send_button.config(font=("Arial", 12))
         self.send_button.pack(padx=20, pady=5)
 
@@ -128,19 +128,8 @@ class Client:
 
         self.win.mainloop()
 
-    def write(self):
 
-        if(not self.input_area.get('1.0', 'end').strip()):
-            return
-
-        message = f"{self.name}: {self.input_area.get('1.0', 'end')}"
-        self.input_area.delete('1.0', 'end')
-        self.text_area.config(state='normal')
-        self.text_area.insert('end', message)
-        self.text_area.yview('end')
-        self.text_area.config(state='disabled')
-
-    def write_enter(self, event):
+    def write_enter(self):
 
         if(not self.input_area.get('1.0', 'end').strip()):
             return

@@ -1,13 +1,15 @@
 from socket import *
 from threading import *
 
+
 class Server:
     def __init__(self):
         self.PORT = 4914
         self.IP = "localhost"
         self.BUFFER = 4096
-        self.SEPARATOR = "αβήταGreΕεekalphaΣσςbet.svg" # String aleatória para usar o split
-        
+        # String aleatória para usar o split
+        self.SEPARATOR = "αβήταGreΕεekalphaΣσςbet.svg"
+
         # Creating server socket
         self.socket = socket(AF_INET, SOCK_STREAM)
         self.socket.bind((self.IP, self.PORT))
@@ -16,7 +18,8 @@ class Server:
         self.clients_info = []
         self.clients_connections = []
 
-        search_connections_thread = Thread(target=self.search_connections, args=())
+        search_connections_thread = Thread(
+            target=self.search_connections, args=())
         search_connections_thread.start()
 
     # Simplesmente retorna o endereço do server
@@ -27,14 +30,14 @@ class Server:
     def search_connections(self):
         for i in range(2):
             connection_socket, address = self.socket.accept()
-            
+
             self.clients_connections.append(connection_socket)
 
             # Nome, endereço
-            info = f"{i}{self.SEPARATOR}{connection_socket.recv(self.BUFFER).decode()}{self.SEPARATOR}{address[0]}{self.SEPARATOR}{address[1]}"
+            info = f"{i}{self.SEPARATOR}{connection_socket.recv(self.BUFFER).decode()}"
 
             self.clients_info.append(info)
-        
+
         self.clients_connections[0].send(self.clients_info[1].encode())
         self.clients_connections[1].send(self.clients_info[0].encode())
 
@@ -44,5 +47,3 @@ class Server:
         self.clients_info = []
         self.clients_connections = []
         self.socket.close()
-
-

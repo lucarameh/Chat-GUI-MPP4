@@ -2,13 +2,19 @@ from importlib.util import set_loader
 import tkinter
 import tkinter.scrolledtext
 from tkinter import Button, Entry, simpledialog
+from socket import *
+from time import *
 
 class Client:
-    def __init__(self):
+    def __init__(self, server_address):
+       self.BUFFER = 4096
+       self.SEPARATOR = "αβήταGreΕεekalphaΣσςbet.svg" # String aleatória para usar o split
        self.name = ''
        self.ip = ''
        self.port = 0
        self.Entered = False
+       self.server_address = server_address
+
        self.entry()
 
     def entry(self):
@@ -26,9 +32,43 @@ class Client:
         port_label = tkinter.Label(Intro, text="Port:", bg="lightgray")
        
         def Enter():
+            # Guarda os inputs
             self.name = nickname_entry.get()
             self.ip = ip_entry.get()
             self.port = port_entry.get()
+
+            # Manda seu endereço para o server e aguarda o endereço da outra pessoa
+            self.socket = socket(AF_INET, SOCK_STREAM)
+            self.socket.connect(self.server_address)
+
+            self.socket.send((f'{self.name}').encode())
+
+            connection_starter, self.other_name, other_ip, other_port = self.socket.recv(self.BUFFER).decode().split(self.SEPARATOR)
+
+            self.socket.close()
+
+            # Inicia a conexão com a outra parte
+            # Existe uma diferença dependendo de qual parte irá fazer o bind/listen, o que é determinado pelo parametro connection_starter
+            if (connection_starter == "1"):
+                print("caiu aqui")
+                p2p_socket = socket(AF_INET, SOCK_STREAM)
+                p2p_socket.bind((self.ip, int(self.port)))
+                p2p_socket.listen(1)
+
+                self.connection_socket, address = p2p_socket.accept()
+                print("caiu aqui2")
+
+            else:
+                self.connection_socket = socket(AF_INET, SOCK_STREAM)
+                sleep(0.5)
+                print("caiu lá")
+                self.connection_socket.connect((other_ip, int(other_port)))
+            
+            self.connection_socket.send(f"oi! :)".encode())
+
+            print(self.connection_socket.recv(self.BUFFER).decode())
+
+            # Vai para a página de chat
             Intro.destroy()
             self.gui_loop()
 

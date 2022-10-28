@@ -2,8 +2,10 @@ from importlib.util import set_loader
 import tkinter
 import tkinter.scrolledtext
 from tkinter import Button, Entry, simpledialog
+from datetime import datetime
 from socket import *
 from time import *
+from threading import *
 
 
 class Client:
@@ -70,7 +72,8 @@ class Client:
 
             # Vai para a página de chat
             Intro.destroy()
-            self.gui_loop()
+            Thread(target=self.gui_loop).start()
+            Thread(target=self.receive).start()
 
         nickname_label.grid(row=0, column=0, padx=5, pady=25)
         nickname_entry.grid(row=0, column=1, padx=5, pady=25)
@@ -141,11 +144,14 @@ class Client:
 
         if(not self.input_area.get('1.0', 'end').strip()):
             return
-
-        message = f"{self.name}: {self.input_area.get('1.0', 'end')}"
+        msg = f"{self.name}: {self.input_area.get('1.0', 'end')}"
+        date = datetime.now()
+        date = date.strftime("%d-%m-%Y %H:%Mh")
+        message = f"{msg}  enviado {date}\n"
         self.input_area.delete('1.0', 'end')
         self.text_area.config(state='normal')
         self.text_area.insert('end', message)
+        self.connection_socket.send(f"{msg}".encode())
         self.text_area.yview('end')
         self.text_area.config(state='disabled')
         self.Entered = True
@@ -154,3 +160,15 @@ class Client:
         self.text_area.configure(state='normal')
         self.text_area.delete('1.0', 'end')
         self.text_area.configure(state='disabled')
+
+    def receive(self):
+        while True:
+            msg = self.connection_socket.recv(self.BUFFER).decode()
+            date = datetime.now()
+            date = date.strftime("%d-%m-%Y %H:%Mh")
+            msg = f"{msg} recebido {date}\n"
+            self.text_area.config(state='normal')
+            self.text_area.insert('end', msg)
+            self.text_area.yview('end')
+            self.text_area.config(state='disabled')
+            self.Entered = True

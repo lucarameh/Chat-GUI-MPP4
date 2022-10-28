@@ -76,7 +76,6 @@ class Client:
             Intro.destroy()
             Thread(target=self.gui_loop).start()
             Thread(target=self.receive).start()
-            Thread(target=self.receive_file).start()
 
         nickname_label.grid(row=0, column=0, padx=5, pady=25)
         nickname_entry.grid(row=0, column=1, padx=5, pady=25)
@@ -154,21 +153,21 @@ class Client:
     
     def send_file(self):
         try:
-            shutil.make_archive("zip1", "zip", self.filename)
-            with open("zip1.zip", "rb") as f:
+            with open(self.filename, "rb") as f:
                 while True:
                     bytes_read =  f.read(self.BUFFER)
                     if not bytes_read:
                         break
                     self.connection_socket.send(bytes_read)
-
+            
+            self.connection_socket.send(".".encode())
             print("Acabou de enviar")
 
         except:
             print("Item not sent")
     
-    def receive_file(self):
-        print("Ainda falta fazer a funcao de receber arquivos")
+    """ def receive_file(self):
+        print("Ainda falta fazer a funcao de receber arquivos") """
 
     def write_enter(self):
 
@@ -192,11 +191,17 @@ class Client:
         self.text_area.configure(state='disabled')
 
     def receive(self):
+        path = os.path.basename("teste.jpg")
+        buffer_list = []
         
         while True:
             msg = self.connection_socket.recv(self.BUFFER)
             try:
                 msg = msg.decode()
+
+                if (msg == "."):
+                    break
+
                 date = datetime.now()
                 date = date.strftime("%d-%m-%Y %H:%Mh")
                 msg = f"{msg} recebido {date}\n"
@@ -206,7 +211,9 @@ class Client:
                 self.text_area.config(state='disabled')
                 self.Entered = True
             except:
-                path = os.path.basename("teste")
-                with open(path, 'wb') as f:
-                    f.write(msg)
+                buffer_list.append(msg)
 
+        with open(path, 'wb') as f:
+           for buffer in buffer_list:
+                f.write(buffer)
+        Thread(target=self.receive).start()

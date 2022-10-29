@@ -12,7 +12,7 @@ class Server:
 
         # Creating server socket
         self.socket = socket(AF_INET, SOCK_STREAM)
-        self.socket.bind((self.IP, self.PORT))
+        self.socket.bind((self.IP, 0))
         self.socket.listen(2)
 
         self.clients_info = []
@@ -24,7 +24,7 @@ class Server:
 
     # Simplesmente retorna o endereço do server
     def send_server_address(self):
-        return (self.IP, self.PORT)
+        return (self.IP, self.socket.getsockname()[1])
 
     # Espera por duas conexões e troca os endereços dos clientes
     def search_connections(self):
@@ -39,8 +39,10 @@ class Server:
             self.clients_info.append(info)
 
         self.clients_connections[0].send(self.clients_info[1].encode())
+        # Espera uma mensagem de confirmação
         self.clients_connections[0].recv(self.BUFFER)
         self.clients_connections[1].send(self.clients_info[0].encode())
+        print("Enviado!")
 
         self.clients_connections[0].close()
         self.clients_connections[1].close()

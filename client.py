@@ -1,15 +1,17 @@
 from distutils.file_util import write_file
+from fileinput import filename
 from importlib.util import set_loader
+from re import I
 import tkinter
 import tkinter.scrolledtext
 from tkinter import INSERT, Button, Entry, simpledialog, filedialog
 from datetime import datetime
 from socket import *
+from turtle import position
+from PIL import Image, ImageTk
 from time import *
 from threading import *
 import shutil
-from PIL import Image, ImageTk
-import windnd
 import os
 
 class Client:
@@ -155,17 +157,25 @@ class Client:
             title="Open a file",
             filetypes=filetypes
         )
-        print('Selected:', self.filename)
-    
-        img = Image.open('%0..png') 
-        img = img.resize((300,300))
-        self.minhaimagem = ImageTk.PhotoImage(img)
         
+        _, file_type =  os.path.splitext(self.filename)
+        print('Selected:', self.filename, file_type)
+        self.udp_socket.sendto(file_type.encode(), (self.other_ip, int(self.other_port)))
+
+        msg = f"{self.name}:"
+        date = datetime.now()
+        date = date.strftime("%d-%m-%Y %H:%Mh")
+        message = f"{msg}  enviado {date}\n"
+       
+        self.minhaimagem = (Image.open(self.filename)).resize((150,150))
+        self.minhaimagem = ImageTk.PhotoImage(self.minhaimagem)
+        
+        position = self.text_area.index(INSERT)
         self.text_area.config(state='normal')
-        self.text_area.image_create('end', image = self.minhaimagem)
+        self.text_area.insert('end', message)
+        self.text_area.image_create('end', padx=5, pady=5, image = self.minhaimagem)
         self.text_area.yview('end')
         self.text_area.config(state='disabled')
-
 
         self.send_file()
     
@@ -185,7 +195,8 @@ class Client:
     
     def receive_file(self):
         file_id_str = str(self.file_id)
-        name = os.path.basename(self.ip + "%" +file_id_str)
+        file_type = self.udp_socket.recvfrom(self.BUFFER)[0].decode()
+        name = os.path.basename(self.other_name + "%" +file_id_str + "." + file_type)
         buffer_list = []
         while True:
             msg = self.udp_socket.recvfrom(self.BUFFER)
@@ -201,7 +212,7 @@ class Client:
         with open(name, 'wb') as f:
            for buffer in buffer_list:
                 f.write(buffer)
-        Thread(target=self.receive).start()
+        Thread(target=self.receive_file).start()
 
 
     def write_enter(self, event=None):

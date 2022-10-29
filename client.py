@@ -1,14 +1,17 @@
 from distutils.file_util import write_file
 from importlib.util import set_loader
+import sys
 import tkinter
 import tkinter.scrolledtext
 from tkinter import Button, Entry, simpledialog, filedialog
 from datetime import datetime
 from socket import *
 from time import *
+from checksum import ip_checksum
 from threading import *
 import shutil
 import os
+
 
 class Client:
     def __init__(self, server_address):
@@ -51,7 +54,11 @@ class Client:
 
             self.udp_socket = socket(AF_INET, SOCK_DGRAM)
             self.udp_socket.bind((self.ip, int(self.port)))
-            
+            self.udp_socket.settimeout(3)
+
+            self.seq_udp = 0
+            self.is_valid = True
+
             self.socket.send(
                 (f'{self.name}{self.SEPARATOR}{self.ip}{self.SEPARATOR}{self.port}').encode())
 
@@ -71,7 +78,8 @@ class Client:
             else:
                 self.connection_socket = socket(AF_INET, SOCK_STREAM)
                 sleep(0.5)
-                self.connection_socket.connect((self.other_ip, int(self.other_port)))
+                self.connection_socket.connect(
+                    (self.other_ip, int(self.other_port)))
 
             self.connection_socket.send(f"oi! :) {self.other_name}".encode())
 
@@ -142,6 +150,32 @@ class Client:
 
         self.win.mainloop()
 
+
+    def sending_rdt(self, data):
+        received_ack = 0
+        while not received_ack:
+            try:
+                self.udp_socket.sendto(ip_checksum(data) + str(self.seq_udp) + data, (self.other_ip, int(self.other_port)))
+            except Exception as msg:
+                print('Error Code : ' + str(msg)
+                sys.exit()
+            try:
+                # receive data from client (data, addr)
+                reply, addr = self.udp_socket.recvfrom(self.BUFFER)
+                ack = reply[0]
+            except timeout:
+                print('send: TIMEOUT')
+            else:
+                print('Checking for ACK ' + str(self.seq_udp))
+                if ack == str(self.seq_udp):
+                    received_ack = True
+
+        print('ACK FOUND, CHANGING SEQ')
+        self.seq_udp = 1 - self.seq_udp
+
+    def receiving_rdt(self, data):
+        
+
     def UploadAction(self, event=None):
         filetypes = (
             ('Video files', '*.mp4'),
@@ -153,48 +187,49 @@ class Client:
             title="Open a file",
             filetypes=filetypes
         )
-        
-        _, file_type =  os.path.splitext(self.filename)
+
+        _, file_type = os.path.splitext(self.filename)
         print('Selected:', self.filename, file_type)
-        self.udp_socket.sendto(file_type.encode(), (self.other_ip, int(self.other_port)))
+        self.udp_socket.sendto(
+            file_type.encode(), (self.other_ip, int(self.other_port)))
 
         self.send_file()
-    
-    def send_file(self):
-      
-            with open(self.filename, "rb") as f:
-                while True:
-                    bytes_read =  f.read(self.BUFFER)
-                    if not bytes_read:
-                        break
-                    self.udp_socket.sendto(bytes_read, (self.other_ip, int(self.other_port)))
-            
-            self.udp_socket.sendto("done".encode(),(self.other_ip, int(self.other_port)))
-            print("Acabou de enviar")
 
-       
-    
+    def send_file(self):
+
+        with open(self.filename, "rb") as f:
+            while True:
+                bytes_read = f.read(self.BUFFER)
+                if not bytes_read:
+                    break
+                self.udp_socket.sendto(
+                    bytes_read, (self.other_ip, int(self.other_port)))
+
+        self.udp_socket.sendto(
+            "done".encode(), (self.other_ip, int(self.other_port)))
+        print("Acabou de enviar")
+
     def receive_file(self):
         file_id_str = str(self.file_id)
         file_type = self.udp_socket.recvfrom(self.BUFFER)[0].decode()
-        name = os.path.basename(self.other_name + "%" +file_id_str + "." + file_type)
+        name = os.path.basename(
+            self.other_name + "%" + file_id_str + "." + file_type)
         buffer_list = []
         while True:
             msg = self.udp_socket.recvfrom(self.BUFFER)
-            msg = msg [0]
+            msg = msg[0]
 
             if (msg == b"done"):
                 break
-            
+
             buffer_list.append(msg)
-        
+
         self.file_id += 1
         print("Recebeu todo arquivo")
         with open(name, 'wb') as f:
-           for buffer in buffer_list:
+            for buffer in buffer_list:
                 f.write(buffer)
         Thread(target=self.receive_file).start()
-
 
     def write_enter(self, event=None):
 
@@ -220,7 +255,7 @@ class Client:
     def receive(self):
         while True:
             msg = self.connection_socket.recv(self.BUFFER)
-        
+
             msg = msg.decode()
             date = datetime.now()
             date = date.strftime("%d-%m-%Y %H:%Mh")
@@ -230,6 +265,3 @@ class Client:
             self.text_area.yview('end')
             self.text_area.config(state='disabled')
             self.Entered = True
-        
-
-        

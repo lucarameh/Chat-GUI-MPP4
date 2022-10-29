@@ -25,7 +25,10 @@ class Client:
         self.Entered = False
         self.server_address = server_address
 
-        self.file_id = 0
+        self.file_id = -1
+
+        self.my_images = []
+        self.my_images_counter = 0
 
         self.entry()
 
@@ -165,18 +168,19 @@ class Client:
         msg = f"{self.name}:"
         date = datetime.now()
         date = date.strftime("%d-%m-%Y %H:%Mh")
-        message = f"{msg}  enviado {date}\n"
-       
-        self.minhaimagem = (Image.open(self.filename)).resize((150,150))
-        self.minhaimagem = ImageTk.PhotoImage(self.minhaimagem)
-        
-        position = self.text_area.index(INSERT)
+        message = f"{msg} enviado {date}\n"
+
+        img = (Image.open(self.filename)).resize((150,150))
+        img = ImageTk.PhotoImage(img)
+        self.my_images.append(img)
+
         self.text_area.config(state='normal')
         self.text_area.insert('end', message)
-        self.text_area.image_create('end', padx=5, pady=5, image = self.minhaimagem)
+        print(len(self.my_images))
+        self.text_area.image_create('end', padx=5, pady=5, image = self.my_images[len(self.my_images) - 1])
+        self.text_area.insert('end', '\n')
         self.text_area.yview('end')
         self.text_area.config(state='disabled')
-
         self.send_file()
     
     def send_file(self):
@@ -191,8 +195,6 @@ class Client:
             self.udp_socket.sendto("done".encode(),(self.other_ip, int(self.other_port)))
             print("Acabou de enviar")
 
-       
-    
     def receive_file(self):
         file_id_str = str(self.file_id)
         file_type = self.udp_socket.recvfrom(self.BUFFER)[0].decode()

@@ -7,6 +7,7 @@ class Server:
         self.PORT = 4914
         self.IP = "localhost"
         self.BUFFER = 4096
+        
         # String aleatória para usar o split
         self.SEPARATOR = "αβήταGreΕεekalphaΣσςbet.svg"
 

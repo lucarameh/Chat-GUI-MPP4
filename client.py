@@ -153,7 +153,10 @@ class Client:
             title="Open a file",
             filetypes=filetypes
         )
-        print('Selected:', self.filename)
+        
+        _, file_type =  os.path.splitext(self.filename)
+        print('Selected:', self.filename, file_type)
+        self.udp_socket.sendto(file_type.encode(), (self.other_ip, int(self.other_port)))
 
         self.send_file()
     
@@ -173,7 +176,8 @@ class Client:
     
     def receive_file(self):
         file_id_str = str(self.file_id)
-        name = os.path.basename(self.other_name + "%" +file_id_str)
+        file_type = self.udp_socket.recvfrom(self.BUFFER)[0].decode()
+        name = os.path.basename(self.other_name + "%" +file_id_str + "." + file_type)
         buffer_list = []
         while True:
             msg = self.udp_socket.recvfrom(self.BUFFER)

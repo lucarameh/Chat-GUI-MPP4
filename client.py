@@ -2,12 +2,14 @@ from distutils.file_util import write_file
 from importlib.util import set_loader
 import tkinter
 import tkinter.scrolledtext
-from tkinter import Button, Entry, simpledialog, filedialog
+from tkinter import INSERT, Button, Entry, simpledialog, filedialog
 from datetime import datetime
 from socket import *
 from time import *
 from threading import *
 import shutil
+from PIL import Image, ImageTk
+import windnd
 import os
 
 class Client:
@@ -153,10 +155,17 @@ class Client:
             title="Open a file",
             filetypes=filetypes
         )
+        print('Selected:', self.filename)
+    
+        img = Image.open('%0..png') 
+        img = img.resize((300,300))
+        self.minhaimagem = ImageTk.PhotoImage(img)
         
-        _, file_type =  os.path.splitext(self.filename)
-        print('Selected:', self.filename, file_type)
-        self.udp_socket.sendto(file_type.encode(), (self.other_ip, int(self.other_port)))
+        self.text_area.config(state='normal')
+        self.text_area.image_create('end', image = self.minhaimagem)
+        self.text_area.yview('end')
+        self.text_area.config(state='disabled')
+
 
         self.send_file()
     
@@ -176,8 +185,7 @@ class Client:
     
     def receive_file(self):
         file_id_str = str(self.file_id)
-        file_type = self.udp_socket.recvfrom(self.BUFFER)[0].decode()
-        name = os.path.basename(self.other_name + "%" +file_id_str + "." + file_type)
+        name = os.path.basename(self.ip + "%" +file_id_str)
         buffer_list = []
         while True:
             msg = self.udp_socket.recvfrom(self.BUFFER)
@@ -193,7 +201,7 @@ class Client:
         with open(name, 'wb') as f:
            for buffer in buffer_list:
                 f.write(buffer)
-        Thread(target=self.receive_file).start()
+        Thread(target=self.receive).start()
 
 
     def write_enter(self, event=None):

@@ -21,6 +21,8 @@ class Client:
         self.Entered = False
         self.server_address = server_address
 
+        self.file_id = 0
+
         self.entry()
 
     def entry(self):
@@ -47,10 +49,13 @@ class Client:
             self.socket = socket(AF_INET, SOCK_STREAM)
             self.socket.connect(self.server_address)
 
+            self.udp_socket = socket(AF_INET, SOCK_DGRAM)
+            self.udp_socket.bind((self.ip, int(self.port)))
+            
             self.socket.send(
                 (f'{self.name}{self.SEPARATOR}{self.ip}{self.SEPARATOR}{self.port}').encode())
 
-            connection_starter, self.other_name, other_ip, other_port = self.socket.recv(
+            connection_starter, self.other_name, self.other_ip, self.other_port = self.socket.recv(
                 self.BUFFER).decode().split(self.SEPARATOR)
 
             self.socket.close()
@@ -66,7 +71,7 @@ class Client:
             else:
                 self.connection_socket = socket(AF_INET, SOCK_STREAM)
                 sleep(0.5)
-                self.connection_socket.connect((other_ip, int(other_port)))
+                self.connection_socket.connect((self.other_ip, int(self.other_port)))
 
             self.connection_socket.send(f"oi! :) {self.other_name}".encode())
 
@@ -76,6 +81,7 @@ class Client:
             Intro.destroy()
             Thread(target=self.gui_loop).start()
             Thread(target=self.receive).start()
+            Thread(target=self.receive_file).start()
 
         nickname_label.grid(row=0, column=0, padx=5, pady=25)
         nickname_entry.grid(row=0, column=1, padx=5, pady=25)
@@ -152,24 +158,41 @@ class Client:
         self.send_file()
     
     def send_file(self):
-        try:
+      
             with open(self.filename, "rb") as f:
                 while True:
                     bytes_read =  f.read(self.BUFFER)
                     if not bytes_read:
                         break
-                    self.connection_socket.send(bytes_read)
+                    self.udp_socket.sendto(bytes_read, (self.other_ip, int(self.other_port)))
             
-            self.connection_socket.send(".".encode())
+            self.udp_socket.sendto("done".encode(),(self.other_ip, int(self.other_port)))
             print("Acabou de enviar")
 
-        except:
-            print("Item not sent")
+       
     
-    """ def receive_file(self):
-        print("Ainda falta fazer a funcao de receber arquivos") """
+    def receive_file(self):
+        file_id_str = str(self.file_id)
+        name = os.path.basename(self.ip + "%" +file_id_str)
+        buffer_list = []
+        while True:
+            msg = self.udp_socket.recvfrom(self.BUFFER)
+            msg = msg [0]
 
-    def write_enter(self):
+            if (msg == b"done"):
+                break
+            
+            buffer_list.append(msg)
+        
+        self.file_id += 1
+        print("Recebeu todo arquivo")
+        with open(name, 'wb') as f:
+           for buffer in buffer_list:
+                f.write(buffer)
+        Thread(target=self.receive).start()
+
+
+    def write_enter(self, event=None):
 
         if(not self.input_area.get('1.0', 'end').strip()):
             return
@@ -191,29 +214,18 @@ class Client:
         self.text_area.configure(state='disabled')
 
     def receive(self):
-        path = os.path.basename("teste.jpg")
-        buffer_list = []
-        
         while True:
             msg = self.connection_socket.recv(self.BUFFER)
-            try:
-                msg = msg.decode()
+        
+            msg = msg.decode()
+            date = datetime.now()
+            date = date.strftime("%d-%m-%Y %H:%Mh")
+            msg = f"{msg} recebido {date}\n"
+            self.text_area.config(state='normal')
+            self.text_area.insert('end', msg)
+            self.text_area.yview('end')
+            self.text_area.config(state='disabled')
+            self.Entered = True
+        
 
-                if (msg == "."):
-                    break
-
-                date = datetime.now()
-                date = date.strftime("%d-%m-%Y %H:%Mh")
-                msg = f"{msg} recebido {date}\n"
-                self.text_area.config(state='normal')
-                self.text_area.insert('end', msg)
-                self.text_area.yview('end')
-                self.text_area.config(state='disabled')
-                self.Entered = True
-            except:
-                buffer_list.append(msg)
-
-        with open(path, 'wb') as f:
-           for buffer in buffer_list:
-                f.write(buffer)
-        Thread(target=self.receive).start()
+        

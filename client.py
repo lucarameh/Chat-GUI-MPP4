@@ -173,7 +173,7 @@ class Client:
     
     def receive_file(self):
         file_id_str = str(self.file_id)
-        name = os.path.basename(self.ip + "%" +file_id_str)
+        name = os.path.basename(self.other_name + "%" +file_id_str)
         buffer_list = []
         while True:
             msg = self.udp_socket.recvfrom(self.BUFFER)
@@ -189,7 +189,7 @@ class Client:
         with open(name, 'wb') as f:
            for buffer in buffer_list:
                 f.write(buffer)
-        Thread(target=self.receive).start()
+        Thread(target=self.receive_file).start()
 
 
     def write_enter(self, event=None):

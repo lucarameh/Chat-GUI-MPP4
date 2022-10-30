@@ -8,7 +8,7 @@ from tkinter import INSERT, Button, Entry, simpledialog, filedialog
 from datetime import datetime
 from socket import *
 from turtle import position
-from PIL import Image, ImageTk
+from PIL import Image, ImageTk, ImageFile
 from time import *
 from threading import *
 import shutil
@@ -212,8 +212,18 @@ class Client:
         self.file_id += 1
         print("Recebeu todo arquivo")
         with open(name, 'wb') as f:
-           for buffer in buffer_list:
+            for buffer in buffer_list:
                 f.write(buffer)
+            ImageFile.LOAD_TRUNCATED_IMAGES = True
+            img = (Image.open(name)).resize((150,150))
+            img = ImageTk.PhotoImage(img)
+            self.my_images.append(img)
+
+            self.text_area.config(state='normal')
+            self.text_area.image_create('end', padx=5, pady=5, image = self.my_images[len(self.my_images) - 1])
+            self.text_area.yview('end')
+            self.text_area.config(state='disabled')
+
         Thread(target=self.receive_file).start()
 
 

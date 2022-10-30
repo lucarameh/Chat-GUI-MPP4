@@ -189,9 +189,11 @@ class Client:
             print("entrou de mp3")
             
             audio_button = Button(self.text_area, text="Listen to mp3", command= lambda filename= self.filename: self.play_mp3(filename), width=10, height=5)
-            
+            stop_button = Button(self.text_area, text="Stop playing", command= lambda filename= self.filename: self.stop_playing(), width=10, height=5)
             self.button_arr.append(audio_button)
+            self.button_arr.append(stop_button)
             
+            self.text_area.window_create("end", window=self.button_arr[len(self.button_arr) -2])
             self.text_area.window_create("end", window=self.button_arr[len(self.button_arr) -1])
             
 
@@ -207,6 +209,12 @@ class Client:
         mixer.init()
         mixer.music.load(filename)
         mixer.music.play()
+    
+    def stop_playing(self):
+        if (mixer.music.get_busy()):
+            mixer.music.pause()
+        else:
+            mixer.music.unpause()
 
     def send_file(self):
       

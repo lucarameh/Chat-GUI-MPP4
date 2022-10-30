@@ -12,6 +12,7 @@ from PIL import Image, ImageTk, ImageFile
 from time import *
 from threading import *
 import shutil
+from pygame import mixer
 from playsound import playsound
 import os
 
@@ -105,6 +106,8 @@ class Client:
         Intro.mainloop()
 
     def gui_loop(self):
+        self.button_arr = []
+
         self.win = tkinter.Tk()
 
         self.win.title(f"Chat P2P de {self.name}")
@@ -182,10 +185,11 @@ class Client:
         
         elif (file_type == ".mp3"):
             print("entrou de mp3")
-            filename = self.filename 
-            audio_button = Button(self.text_area, text="Listen to mp3", command=self.play_mp3(filename), width=10, height=5)
             
-            self.text_area.window_create("end", window=audio_button)
+            audio_button = Button(self.text_area, text="Listen to mp3", command= lambda filename= self.filename: self.play_mp3(filename), width=10, height=5)
+            self.button_arr.append(audio_button)
+            
+            self.text_area.window_create("end", window=self.button_arr[len(self.button_arr) -1])
             
 
         self.text_area.insert('end', '\n')
@@ -196,7 +200,10 @@ class Client:
     
     def play_mp3(self, filename):
         print(filename)
-        #playsound(filename)
+
+        mixer.init()
+        mixer.music.load(filename)
+        mixer.music.play()
 
     def send_file(self):
       

@@ -110,6 +110,7 @@ class Client:
     def gui_loop(self):
         
         self.button_arr = []
+        self.video_arr = []
 
         self.win = tkinter.Tk()
 
@@ -202,7 +203,14 @@ class Client:
             print("entrou de mp4")
             video.pack(expand=True, fill="both")
             video.play()
-            self.text_area.window_create("end", window=video)
+
+            self.video_arr.append(video)
+            self.text_area.window_create("end", window=self.video_arr[len(self.video_arr) - 1])
+
+            video_button = Button(self.text_area, text="Play video/Pause video", command= lambda video_id= len(self.video_arr) - 1: self.play_video(video_id), width=10, height=5)
+            self.button_arr.append(video_button)
+            self.text_area.window_create("end", window=self.button_arr[len(self.button_arr) -1])
+
 
             
 
@@ -212,6 +220,13 @@ class Client:
         
         self.send_file()
     
+    def play_video(self, video_id):
+        if (self.video_arr[video_id].is_paused()):
+            self.video_arr[video_id].play()
+        else:
+            self.video_arr[video_id].pause()
+        
+
     def play_mp3(self, filename):
         print(filename)
 
@@ -275,7 +290,7 @@ class Client:
             
             if (file_type == ".mp3"):
                 audio_button = Button(self.text_area, text="Listen to mp3", command= lambda filename= name: self.play_mp3(filename), width=10, height=5)
-                stop_button = Button(self.text_area, text="Stop playing", command= lambda filename= name: self.stop_playing(), width=10, height=5)
+                stop_button = Button(self.text_area, text="Pause/Play", command= lambda filename= name: self.stop_playing(), width=10, height=5)
                 self.button_arr.append(audio_button)
                 self.button_arr.append(stop_button)
                 

@@ -190,7 +190,7 @@ class Client:
         elif (file_type == ".mp3"):
             
             audio_button = Button(self.text_area, text="Listen to mp3", command= lambda filename= self.filename: self.play_mp3(filename), width=10, height=5)
-            stop_button = Button(self.text_area, text="Stop playing", command= lambda filename= self.filename: self.stop_playing(), width=10, height=5)
+            stop_button = Button(self.text_area, text="Play/Pause", command= lambda filename= self.filename: self.stop_playing(), width=10, height=5)
             self.button_arr.append(audio_button)
             self.button_arr.append(stop_button)
             
@@ -207,7 +207,7 @@ class Client:
             self.video_arr.append(video)
             self.text_area.window_create("end", window=self.video_arr[len(self.video_arr) - 1])
 
-            video_button = Button(self.text_area, text="Play video/Pause video", command= lambda video_id= len(self.video_arr) - 1: self.play_video(video_id), width=10, height=5)
+            video_button = Button(self.text_area, text="Play/Pause", command= lambda video_id= len(self.video_arr) - 1: self.play_video(video_id), width=10, height=5)
             self.button_arr.append(video_button)
             self.text_area.window_create("end", window=self.button_arr[len(self.button_arr) -1])
 
@@ -284,19 +284,34 @@ class Client:
                 img = ImageTk.PhotoImage(img)
                 self.my_images.append(img)
                 self.text_area.image_create('end', padx=5, pady=5, image = self.my_images[len(self.my_images) - 1])
-                self.text_area.insert('end', '\n')
-                self.text_area.yview('end')
-                self.text_area.config(state='disabled')
+                
             
-            if (file_type == ".mp3"):
+            elif (file_type == ".mp3"):
                 audio_button = Button(self.text_area, text="Listen to mp3", command= lambda filename= name: self.play_mp3(filename), width=10, height=5)
-                stop_button = Button(self.text_area, text="Pause/Play", command= lambda filename= name: self.stop_playing(), width=10, height=5)
+                stop_button = Button(self.text_area, text="Play/Pause", command= lambda filename= name: self.stop_playing(), width=10, height=5)
                 self.button_arr.append(audio_button)
                 self.button_arr.append(stop_button)
                 
                 self.text_area.window_create("end", window=self.button_arr[len(self.button_arr) -2])
                 self.text_area.window_create("end", window=self.button_arr[len(self.button_arr) -1])
             
+            elif (file_type == ".mp4"):
+                video =  TkinterVideo(self.text_area, scaled=True)
+                video.load(name)
+                print("entrou de mp4")
+                video.pack(expand=True, fill="both")
+                video.play()
+
+                self.video_arr.append(video)
+                self.text_area.window_create("end", window=self.video_arr[len(self.video_arr) - 1])
+
+                video_button = Button(self.text_area, text="Play/Pause", command= lambda video_id= len(self.video_arr) - 1: self.play_video(video_id), width=10, height=5)
+                self.button_arr.append(video_button)
+                self.text_area.window_create("end", window=self.button_arr[len(self.button_arr) -1])
+
+            self.text_area.insert('end', '\n')
+            self.text_area.yview('end')
+            self.text_area.config(state='disabled')
 
         Thread(target=self.receive_file).start()
 

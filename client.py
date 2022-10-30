@@ -176,7 +176,6 @@ class Client:
 
         self.text_area.config(state='normal')
         self.text_area.insert('end', message)
-        print(len(self.my_images))
         self.text_area.image_create('end', padx=5, pady=5, image = self.my_images[len(self.my_images) - 1])
         self.text_area.insert('end', '\n')
         self.text_area.yview('end')
@@ -214,13 +213,21 @@ class Client:
         with open(name, 'wb') as f:
             for buffer in buffer_list:
                 f.write(buffer)
+
             ImageFile.LOAD_TRUNCATED_IMAGES = True
             img = (Image.open(name)).resize((150,150))
             img = ImageTk.PhotoImage(img)
             self.my_images.append(img)
 
+        
+            date = datetime.now()
+            date = date.strftime("%d-%m-%Y %H:%Mh")
+            msg = f"{self.other_name}: recebido {date}\n"
+
             self.text_area.config(state='normal')
+            self.text_area.insert('end', msg)
             self.text_area.image_create('end', padx=5, pady=5, image = self.my_images[len(self.my_images) - 1])
+            self.text_area.insert('end', '\n')
             self.text_area.yview('end')
             self.text_area.config(state='disabled')
 

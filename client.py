@@ -36,6 +36,7 @@ class Client:
 
         self.entry()
 
+    # Tela inicial onde cada cliente coloca suas informações
     def entry(self):
         Intro = tkinter.Tk()
         Intro.title("Login")
@@ -50,6 +51,16 @@ class Client:
         port_entry = Entry(Intro)
         port_label = tkinter.Label(Intro, text="Port:", bg="lightgray")
 
+        nickname_label.grid(row=0, column=0, padx=5, pady=25)
+        nickname_entry.grid(row=0, column=1, padx=5, pady=25)
+
+        ip_label.grid(row=1, column=0, padx=5, pady=25)
+        ip_entry.grid(row=1, column=1, padx=5, pady=25)
+
+        port_label.grid(row=2, column=0, padx=5, pady=25)
+        port_entry.grid(row=2, column=1, padx=5, pady=25)
+
+        # Função chamada após o usuário colocar suas informações
         def Enter():
             # Guarda os inputs
             self.name = nickname_entry.get()
@@ -59,9 +70,6 @@ class Client:
             # Manda seu endereço para o server e aguarda o endereço da outra pessoa
             self.socket = socket(AF_INET, SOCK_STREAM)
             self.socket.connect(self.server_address)
-
-            self.udp_socket = socket(AF_INET, SOCK_DGRAM)
-            self.udp_socket.bind((self.ip, int(self.port)))
             
             self.socket.send(
                 (f'{self.name}{self.SEPARATOR}{self.ip}{self.SEPARATOR}{self.port}').encode())
@@ -70,6 +78,10 @@ class Client:
                 self.BUFFER).decode().split(self.SEPARATOR)
 
             self.socket.close()
+
+            # Socket udp usado para transferência de arquivos
+            self.udp_socket = socket(AF_INET, SOCK_DGRAM)
+            self.udp_socket.bind((self.ip, int(self.port)))
 
             # Inicia a conexão com a outra parte
             # Existe uma diferença dependendo de qual parte irá fazer o bind/listen, o que é determinado pelo parametro connection_starter
@@ -84,31 +96,18 @@ class Client:
                 sleep(0.5)
                 self.connection_socket.connect((self.other_ip, int(self.other_port)))
 
-            self.connection_socket.send(f"oi! :) {self.other_name}".encode())
-
-            print(self.connection_socket.recv(self.BUFFER).decode())
-
             # Vai para a página de chat
             Intro.destroy()
             Thread(target=self.gui_loop).start()
-            Thread(target=self.receive).start()
+            Thread(target=self.receive_msg).start()
             Thread(target=self.receive_file).start()
-
-        nickname_label.grid(row=0, column=0, padx=5, pady=25)
-        nickname_entry.grid(row=0, column=1, padx=5, pady=25)
-
-        ip_label.grid(row=1, column=0, padx=5, pady=25)
-        ip_entry.grid(row=1, column=1, padx=5, pady=25)
-
-        port_label.grid(row=2, column=0, padx=5, pady=25)
-        port_entry.grid(row=2, column=1, padx=5, pady=25)
 
         login_button = Button(Intro, text="Enter", command=Enter)
         login_button.grid(row=4, column=1, padx=25)
         Intro.mainloop()
 
+    # Parte gráfica do chat
     def gui_loop(self):
-        
         self.button_arr = []
         self.video_arr = []
 
@@ -135,7 +134,7 @@ class Client:
         self.input_area.pack(padx=20, pady=5)
 
         self.send_button = tkinter.Button(
-            self.win, text="send", command=self.write_enter)
+            self.win, text="send", command=self.send_msg)
         self.send_button.config(font=("Arial", 12))
         self.send_button.pack(padx=20, pady=5)
 
@@ -145,23 +144,56 @@ class Client:
         self.clear_button.pack(padx=20, pady=5)
 
         self.addFile_button = tkinter.Button(
-            self.win, text="Add file", command=self.UploadAction
-        )
+            self.win, text="Add file", command=self.send_file)
+
         self.addFile_button.config(font=("Arial", 12))
         self.addFile_button.pack(padx=20, pady=5)
 
         def clear(event):
             self.input_area.delete('1.0', 'end')
-        self.input_area.bind("<Return>", self.write_enter)
+        self.input_area.bind("<Return>", self.send_msg)
         self.input_area.bind("<KeyRelease-Return>", clear)
 
         self.win.mainloop()
 
-    def UploadAction(self, event=None):
+    # Função para receber uma mensagem de texto
+    def receive_msg(self):
+        while True:
+            msg = self.connection_socket.recv(self.BUFFER)
+            msg = msg.decode()
+            date = datetime.now()
+            date = date.strftime("%d-%m-%Y %H:%Mh")
+            msg = f"{msg} recebido {date}\n"
+
+            self.text_area.config(state='normal')
+            self.text_area.insert('end', msg)
+            self.text_area.yview('end')
+            self.text_area.config(state='disabled')
+            self.Entered = True
+
+    # Função para enviar uma mensagem de texto
+    def send_msg(self, event=None):
+        if(not self.input_area.get('1.0', 'end').strip()):
+            return
+        msg = f"{self.name}: {self.input_area.get('1.0', 'end')}"
+        date = datetime.now()
+        date = date.strftime("%d-%m-%Y %H:%Mh")
+        message = f"{msg}  enviado {date}\n"
+        self.input_area.delete('1.0', 'end')
+        self.text_area.config(state='normal')
+        self.text_area.insert('end', message)
+        self.connection_socket.send(f"{msg}".encode())
+        self.text_area.yview('end')
+        self.text_area.config(state='disabled')
+        self.Entered = True
+
+    # Função para enviar um arquivo
+    def send_file(self):
+        # Seleciona um arquivo local e formata o nome com o qual ele será salvo
         filetypes = (
-            ('Video files', '*.mp4'),
-            ('Photo files', '*.jpg *.jpeg *.png'),
-            ('Audio files', '*.mp3*')
+        ('Video files', '*.mp4'),
+        ('Photo files', '*.jpg *.jpeg *.png'),
+        ('Audio files', '*.mp3*')
         )
 
         self.filename = filedialog.askopenfilename(
@@ -170,7 +202,6 @@ class Client:
         )
         
         _, file_type =  os.path.splitext(self.filename)
-        print('Selected:', self.filename, file_type)
         self.udp_socket.sendto(file_type.encode(), (self.other_ip, int(self.other_port)))
 
         msg = f"{self.name}:"
@@ -180,7 +211,8 @@ class Client:
         self.text_area.config(state='normal')
         self.text_area.insert('end', message)
 
-        if (file_type == ".png" or file_type == "jpg" or file_type == ".jpeg"):
+        # Mostra o arquivo no chat, porém a forma como isso é feito depende do tipo dele
+        if (file_type == ".png" or file_type == ".jpg" or file_type == ".jpeg"):
             img = (Image.open(self.filename)).resize((150,150))
             img = ImageTk.PhotoImage(img)
             self.my_images.append(img)
@@ -189,7 +221,7 @@ class Client:
         
         elif (file_type == ".mp3"):
             
-            audio_button = Button(self.text_area, text="Listen to mp3", command= lambda filename= self.filename: self.play_mp3(filename), width=10, height=5)
+            audio_button = Button(self.text_area, text="Start audio", command= lambda filename= self.filename: self.play_mp3(filename), width=10, height=5)
             stop_button = Button(self.text_area, text="Play/Pause", command= lambda filename= self.filename: self.stop_playing(), width=10, height=5)
             self.button_arr.append(audio_button)
             self.button_arr.append(stop_button)
@@ -200,7 +232,6 @@ class Client:
         elif (file_type == ".mp4"):
             video =  TkinterVideo(self.text_area, scaled=True)
             video.load(self.filename)
-            print("entrou de mp4")
             video.pack(expand=True, fill="both")
             video.play()
 
@@ -211,52 +242,30 @@ class Client:
             self.button_arr.append(video_button)
             self.text_area.window_create("end", window=self.button_arr[len(self.button_arr) -1])
 
-
-            
-
         self.text_area.insert('end', '\n')
         self.text_area.yview('end')
         self.text_area.config(state='disabled')
+
+        # Começa de fato a enviar o arquivo para a outra parte
+        with open(self.filename, "rb") as f:
+            while True:
+                bytes_read =  f.read(self.BUFFER)
+                if not bytes_read:
+                    break
+                self.udp_socket.sendto(bytes_read, (self.other_ip, int(self.other_port)))
         
-        self.send_file()
-    
-    def play_video(self, video_id):
-        if (self.video_arr[video_id].is_paused()):
-            self.video_arr[video_id].play()
-        else:
-            self.video_arr[video_id].pause()
-        
+        # Mensagem de término do envio
+        self.udp_socket.sendto("done".encode(),(self.other_ip, int(self.other_port)))
 
-    def play_mp3(self, filename):
-        print(filename)
-
-        mixer.init()
-        mixer.music.load(filename)
-        mixer.music.play()
-    
-    def stop_playing(self):
-        if (mixer.music.get_busy()):
-            mixer.music.pause()
-        else:
-            mixer.music.unpause()
-
-    def send_file(self):
-      
-            with open(self.filename, "rb") as f:
-                while True:
-                    bytes_read =  f.read(self.BUFFER)
-                    if not bytes_read:
-                        break
-                    self.udp_socket.sendto(bytes_read, (self.other_ip, int(self.other_port)))
-            
-            self.udp_socket.sendto("done".encode(),(self.other_ip, int(self.other_port)))
-            print("Acabou de enviar")
-
+    # Função para receber um arquivo
     def receive_file(self):
+        # Formata o nome com qual o arquivo será salvo
         file_id_str = str(self.file_id)
         file_type = self.udp_socket.recvfrom(self.BUFFER)[0].decode()
         name = os.path.basename(self.other_name + "%" +file_id_str + "." + file_type)
         buffer_list = []
+
+        # Começa a receber as partes do arquivo e as guarda num array
         while True:
             msg = self.udp_socket.recvfrom(self.BUFFER)
             msg = msg [0]
@@ -267,7 +276,8 @@ class Client:
             buffer_list.append(msg)
         
         self.file_id += 1
-        print("Recebeu todo arquivo")
+
+        # Remonta o arquivo recebido
         with open(name, 'wb') as f:
             for buffer in buffer_list:
                 f.write(buffer)
@@ -278,6 +288,7 @@ class Client:
             self.text_area.config(state='normal')
             self.text_area.insert('end', msg)
 
+            # Mostra o arquivo no chat dependendo de seu tipo
             if (file_type == ".png" or file_type == ".jpg" or file_type == ".jpeg"):
                 ImageFile.LOAD_TRUNCATED_IMAGES = True
                 img = (Image.open(name)).resize((150,150))
@@ -287,7 +298,7 @@ class Client:
                 
             
             elif (file_type == ".mp3"):
-                audio_button = Button(self.text_area, text="Listen to mp3", command= lambda filename= name: self.play_mp3(filename), width=10, height=5)
+                audio_button = Button(self.text_area, text="Start audio", command= lambda filename= name: self.play_mp3(filename), width=10, height=5)
                 stop_button = Button(self.text_area, text="Play/Pause", command= lambda filename= name: self.stop_playing(), width=10, height=5)
                 self.button_arr.append(audio_button)
                 self.button_arr.append(stop_button)
@@ -315,41 +326,28 @@ class Client:
 
         Thread(target=self.receive_file).start()
 
-
-    def write_enter(self, event=None):
-
-        if(not self.input_area.get('1.0', 'end').strip()):
-            return
-        msg = f"{self.name}: {self.input_area.get('1.0', 'end')}"
-        date = datetime.now()
-        date = date.strftime("%d-%m-%Y %H:%Mh")
-        message = f"{msg}  enviado {date}\n"
-        self.input_area.delete('1.0', 'end')
-        self.text_area.config(state='normal')
-        self.text_area.insert('end', message)
-        self.connection_socket.send(f"{msg}".encode())
-        self.text_area.yview('end')
-        self.text_area.config(state='disabled')
-        self.Entered = True
-
+    # Limpa o chat
     def clear(self):
         self.text_area.configure(state='normal')
         self.text_area.delete('1.0', 'end')
         self.text_area.configure(state='disabled')
-
-    def receive(self):
-        while True:
-            msg = self.connection_socket.recv(self.BUFFER)
-        
-            msg = msg.decode()
-            date = datetime.now()
-            date = date.strftime("%d-%m-%Y %H:%Mh")
-            msg = f"{msg} recebido {date}\n"
-            self.text_area.config(state='normal')
-            self.text_area.insert('end', msg)
-            self.text_area.yview('end')
-            self.text_area.config(state='disabled')
-            self.Entered = True
-        
-
-        
+    
+    # Função de play/pause do vídeo
+    def play_video(self, video_id):
+        if (self.video_arr[video_id].is_paused()):
+            self.video_arr[video_id].play()
+        else:
+            self.video_arr[video_id].pause()
+    
+    # Função para iniciar o áudio
+    def play_mp3(self, filename):
+        mixer.init()
+        mixer.music.load(filename)
+        mixer.music.play()
+    
+    # Função de play/pause do áudio
+    def stop_playing(self):
+        if (mixer.music.get_busy()):
+            mixer.music.pause()
+        else:
+            mixer.music.unpause()

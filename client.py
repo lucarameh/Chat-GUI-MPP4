@@ -8,6 +8,7 @@ from tkinter import INSERT, Button, Entry, simpledialog, filedialog
 from datetime import datetime
 from socket import *
 from turtle import position
+from tkVideoPlayer import TkinterVideo
 from PIL import Image, ImageTk, ImageFile
 from time import *
 from threading import *
@@ -186,7 +187,6 @@ class Client:
             self.text_area.image_create('end', padx=5, pady=5, image = self.my_images[len(self.my_images) - 1])
         
         elif (file_type == ".mp3"):
-            print("entrou de mp3")
             
             audio_button = Button(self.text_area, text="Listen to mp3", command= lambda filename= self.filename: self.play_mp3(filename), width=10, height=5)
             stop_button = Button(self.text_area, text="Stop playing", command= lambda filename= self.filename: self.stop_playing(), width=10, height=5)
@@ -196,7 +196,14 @@ class Client:
             self.text_area.window_create("end", window=self.button_arr[len(self.button_arr) -2])
             self.text_area.window_create("end", window=self.button_arr[len(self.button_arr) -1])
         
-        
+        elif (file_type == ".mp4"):
+            video =  TkinterVideo(self.text_area, scaled=True)
+            video.load(self.filename)
+            print("entrou de mp4")
+            video.pack(expand=True, fill="both")
+            video.play()
+            self.text_area.window_create("end", window=video)
+
             
 
         self.text_area.insert('end', '\n')
@@ -268,12 +275,12 @@ class Client:
             
             if (file_type == ".mp3"):
                 audio_button = Button(self.text_area, text="Listen to mp3", command= lambda filename= name: self.play_mp3(filename), width=10, height=5)
-            stop_button = Button(self.text_area, text="Stop playing", command= lambda filename= name: self.stop_playing(), width=10, height=5)
-            self.button_arr.append(audio_button)
-            self.button_arr.append(stop_button)
-            
-            self.text_area.window_create("end", window=self.button_arr[len(self.button_arr) -2])
-            self.text_area.window_create("end", window=self.button_arr[len(self.button_arr) -1])
+                stop_button = Button(self.text_area, text="Stop playing", command= lambda filename= name: self.stop_playing(), width=10, height=5)
+                self.button_arr.append(audio_button)
+                self.button_arr.append(stop_button)
+                
+                self.text_area.window_create("end", window=self.button_arr[len(self.button_arr) -2])
+                self.text_area.window_create("end", window=self.button_arr[len(self.button_arr) -1])
             
 
         Thread(target=self.receive_file).start()

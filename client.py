@@ -19,6 +19,7 @@ import os
 class Client:
     def __init__(self, server_address):
         self.BUFFER = 4096
+        self.is_playing = False
         # String aleatória para usar o split
         self.SEPARATOR = "αβήταGreΕεekalphaΣσςbet.svg"
         self.name = ''
@@ -106,6 +107,7 @@ class Client:
         Intro.mainloop()
 
     def gui_loop(self):
+        
         self.button_arr = []
 
         self.win = tkinter.Tk()
@@ -187,6 +189,7 @@ class Client:
             print("entrou de mp3")
             
             audio_button = Button(self.text_area, text="Listen to mp3", command= lambda filename= self.filename: self.play_mp3(filename), width=10, height=5)
+            
             self.button_arr.append(audio_button)
             
             self.text_area.window_create("end", window=self.button_arr[len(self.button_arr) -1])
@@ -252,6 +255,16 @@ class Client:
                 self.text_area.insert('end', '\n')
                 self.text_area.yview('end')
                 self.text_area.config(state='disabled')
+            
+            if (file_type == ".mp3"):
+                audio_button = Button(self.text_area, text="Listen to mp3", command= lambda filename= name: self.play_mp3(filename), width=10, height=5)
+                self.button_arr.append(audio_button)
+                self.text_area.window_create("end", window=self.button_arr[len(self.button_arr) -1])
+
+                self.text_area.insert('end', '\n')
+                self.text_area.yview('end')
+                self.text_area.config(state='disabled')
+            
 
         Thread(target=self.receive_file).start()
 

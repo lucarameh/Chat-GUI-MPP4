@@ -4,7 +4,7 @@ from importlib.util import set_loader
 from re import I
 import tkinter
 import tkinter.scrolledtext
-from tkinter import INSERT, Button, Entry, Frame, simpledialog, filedialog
+from tkinter import INSERT, Button, Entry, simpledialog, filedialog
 from datetime import datetime
 from socket import *
 from turtle import position
@@ -186,6 +186,7 @@ class Client:
             self.text_area.image_create('end', padx=5, pady=5, image = self.my_images[len(self.my_images) - 1])
         
         elif (file_type == ".mp3"):
+            print("entrou de mp3")
             
             audio_button = Button(self.text_area, text="Listen to mp3", command= lambda filename= self.filename: self.play_mp3(filename), width=10, height=5)
             stop_button = Button(self.text_area, text="Stop playing", command= lambda filename= self.filename: self.stop_playing(), width=10, height=5)
@@ -195,11 +196,7 @@ class Client:
             self.text_area.window_create("end", window=self.button_arr[len(self.button_arr) -2])
             self.text_area.window_create("end", window=self.button_arr[len(self.button_arr) -1])
         
-        elif (file_type == ".mp4"):
-            print("entrou mp4")
-            video = Frame(self.text_area, bg="#000000", width=10, height=10)
-
-
+        
             
 
         self.text_area.insert('end', '\n')
@@ -271,12 +268,12 @@ class Client:
             
             if (file_type == ".mp3"):
                 audio_button = Button(self.text_area, text="Listen to mp3", command= lambda filename= name: self.play_mp3(filename), width=10, height=5)
-                self.button_arr.append(audio_button)
-                self.text_area.window_create("end", window=self.button_arr[len(self.button_arr) -1])
-
-                self.text_area.insert('end', '\n')
-                self.text_area.yview('end')
-                self.text_area.config(state='disabled')
+            stop_button = Button(self.text_area, text="Stop playing", command= lambda filename= name: self.stop_playing(), width=10, height=5)
+            self.button_arr.append(audio_button)
+            self.button_arr.append(stop_button)
+            
+            self.text_area.window_create("end", window=self.button_arr[len(self.button_arr) -2])
+            self.text_area.window_create("end", window=self.button_arr[len(self.button_arr) -1])
             
 
         Thread(target=self.receive_file).start()

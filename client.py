@@ -12,6 +12,7 @@ from PIL import Image, ImageTk, ImageFile
 from time import *
 from threading import *
 import shutil
+from playsound import playsound
 import os
 
 class Client:
@@ -169,19 +170,34 @@ class Client:
         date = datetime.now()
         date = date.strftime("%d-%m-%Y %H:%Mh")
         message = f"{msg} enviado {date}\n"
-
-        img = (Image.open(self.filename)).resize((150,150))
-        img = ImageTk.PhotoImage(img)
-        self.my_images.append(img)
-
         self.text_area.config(state='normal')
         self.text_area.insert('end', message)
-        self.text_area.image_create('end', padx=5, pady=5, image = self.my_images[len(self.my_images) - 1])
+
+        if (file_type == ".png" or file_type == "jpg" or file_type == ".jpeg"):
+            img = (Image.open(self.filename)).resize((150,150))
+            img = ImageTk.PhotoImage(img)
+            self.my_images.append(img)
+
+            self.text_area.image_create('end', padx=5, pady=5, image = self.my_images[len(self.my_images) - 1])
+        
+        elif (file_type == ".mp3"):
+            print("entrou de mp3")
+            filename = self.filename 
+            audio_button = Button(self.text_area, text="Listen to mp3", command=self.play_mp3(filename), width=10, height=5)
+            
+            self.text_area.window_create("end", window=audio_button)
+            
+
         self.text_area.insert('end', '\n')
         self.text_area.yview('end')
         self.text_area.config(state='disabled')
+        
         self.send_file()
     
+    def play_mp3(self, filename):
+        print(filename)
+        #playsound(filename)
+
     def send_file(self):
       
             with open(self.filename, "rb") as f:
@@ -214,22 +230,21 @@ class Client:
             for buffer in buffer_list:
                 f.write(buffer)
 
-            ImageFile.LOAD_TRUNCATED_IMAGES = True
-            img = (Image.open(name)).resize((150,150))
-            img = ImageTk.PhotoImage(img)
-            self.my_images.append(img)
-
-        
             date = datetime.now()
             date = date.strftime("%d-%m-%Y %H:%Mh")
             msg = f"{self.other_name}: recebido {date}\n"
-
             self.text_area.config(state='normal')
             self.text_area.insert('end', msg)
-            self.text_area.image_create('end', padx=5, pady=5, image = self.my_images[len(self.my_images) - 1])
-            self.text_area.insert('end', '\n')
-            self.text_area.yview('end')
-            self.text_area.config(state='disabled')
+
+            if (file_type == ".png" or file_type == ".jpg" or file_type == ".jpeg"):
+                ImageFile.LOAD_TRUNCATED_IMAGES = True
+                img = (Image.open(name)).resize((150,150))
+                img = ImageTk.PhotoImage(img)
+                self.my_images.append(img)
+                self.text_area.image_create('end', padx=5, pady=5, image = self.my_images[len(self.my_images) - 1])
+                self.text_area.insert('end', '\n')
+                self.text_area.yview('end')
+                self.text_area.config(state='disabled')
 
         Thread(target=self.receive_file).start()
 
